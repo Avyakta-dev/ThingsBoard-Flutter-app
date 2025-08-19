@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:thingsboard_client/thingsboard_client.dart';
+import 'device_list_screen.dart'; // 👈 import the next screen
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -30,10 +31,13 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-      // ✅ Only show success here
-      setState(() {
-        _message = "Login success! Token: ${tbClient.getJwtToken()}";
-      });
+      // ✅ Navigate to device list on success
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DeviceListScreen(tbClient: tbClient),
+        ),
+      );
     } catch (e) {
       setState(() {
         _message = "Login failed: $e";
