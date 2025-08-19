@@ -1,19 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:thingsboard_client/thingsboard_client.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final tbClient = ThingsboardClient(
+    'https://demo.thingsboard.io',
+  ); // <-- update if using local
 
-  void login() {
-    final email = emailController.text;
-    final password = passwordController.text;
-    // For now, just print to console
-    print('Email: $email, Password: $password');
+  bool _isLoading = false;
+  String _message = '';
+
+  Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+      _message = '';
+    });
+
+    try {
+      await tbClient.login(
+        LoginRequest(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        ),
+      );
+
+      // ✅ Only show success here
+      setState(() {
+        _message = "Login success! Token: ${tbClient.getJwtToken()}";
+      });
+    } catch (e) {
+      setState(() {
+        _message = "Login failed: $e";
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -21,20 +50,32 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('ThingsBoard Login')),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+              controller: _emailController,
+              decoration: InputDecoration(labelText: 'Email'),
             ),
             TextField(
-              controller: passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
+              controller: _passwordController,
+              decoration: InputDecoration(labelText: 'Password'),
               obscureText: true,
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: login, child: const Text('Login')),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _login,
+              child: _isLoading ? CircularProgressIndicator() : Text('Login'),
+            ),
+            SizedBox(height: 20),
+            Text(
+              _message,
+              style: TextStyle(
+                color: _message.startsWith("Login success")
+                    ? Colors.green
+                    : Colors.red,
+              ),
+            ),
           ],
         ),
       ),
